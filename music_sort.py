@@ -1,7 +1,7 @@
 import eyed3, os, shutil, time, urllib2, json
 from urllib import FancyURLopener
 
-toplevel = 'E:\Music\Albums, more recent\\'
+toplevel = 'E:\Music\To Sort\\'
 
 remove_table = dict((ord(char), None) for char in '"?\\/*:<|>')
 
@@ -39,7 +39,9 @@ def getAlbumArt(album, artist, date, dest = ''):
 
 for root, dirnames, filenames in os.walk(toplevel):
 	for file in filenames:
-		if file.endswith(".mp3"):
+		fileLower = file.lower()
+		ending = fileLower[-4:]
+		if ending == '.mp3':
 			try:
 				audiofile = eyed3.load(root + '\\' + file)
 			except Exception as e:
@@ -94,32 +96,25 @@ for root, dirnames, filenames in os.walk(toplevel):
 				shutil.move(src, dest)
 			except IOError as e:
 				print e
-		elif file.endswith('.jpg') or file.endswith('.JPG'):
+
+		elif ending == '.jpg':
 			if file != 'cover.jpg':
 				os.remove(os.path.join(root, file))
 				print 'deleted old album art: ' + file
 			else:
 				print 'skipped cover.jpg'
-		elif file.endswith('.m4a') or file.endswith('.M4A'):
-			os.remove(os.path.join(root, file))
-			print 'deleted m4a file'
-		elif file == "desktop.ini":
-			os.remove(os.path.join(root, file))
-			print 'deleted desktop.ini file'
-		elif file.endswith('.m4p'):
-			os.remove(os.path.join(root, file))
-			print 'deleted m4p file'
-		elif file.endswith('.mp4'):
-			os.remove(os.path.join(root, file))
-			print 'deleted mp4 file'
-		elif file.endswith('.mid') or file.endswith('.midi'):
+		elif ending == '.m4a' or ending == '.m4p' or ending == '.mp4' or ending == '.ini' or ending == '.sfv' or ending == '.nfo':
+			filePath = os.path.join(root, file)
+			os.remove(filePath)
+			print 'deleted {0}'.format(filePath)
+		elif fileLower.endswith('.mid') or fileLower.endswith('midi'):
 			src = os.path.join(root, file)
 			destFolder = toplevel + 'MIDI\\'
 			if not os.path.exists(destFolder):
 				os.makedirs(destFolder)
 			shutil.move(src, destFolder + file)
 			print 'moved mid file'
-		elif file.endswith('.wav') or file.endswith('.WAV'):
+		elif fileLower.endswith('.wav'):
 			src = os.path.join(root, file)
 			destFolder = toplevel + 'WAV\\'
 			if not os.path.exists(destFolder):

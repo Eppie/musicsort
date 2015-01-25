@@ -1,16 +1,19 @@
 import eyed3, os, shutil, time, urllib2, json, urllib, re
-from urllib import FancyURLopener
 
-# toplevel = 'E:\Music\To Sort\\'
 toplevel = 'D:\_Evan backup\music\\'
-remove_table = dict((ord(char), None) for char in '"?\\/*:<|>')
+toplevel = 'E:\Music\Sorted\\'
+removeCharacters = dict((ord(char), None) for char in '"?\\/*:<|>')
+removeFileTypes = ['.m4a', '.m4v', '.m4p', '.mp4', '.ini', '.sfv', '.nfo', '.rar', '.rtf', '.doc', '.wma', '.wmv', '.flv', '.tqd', '.lnk', '.m3u', '.txt', '.cda', '.bin', '.cue', '.xml', '.pdf', '.zip', '.sfk', '.dat', 'mp3#', '.url', '.avi', '.mpg', 'mpeg', '.wpl', '.vob', 'toc2', '.ape', 'html', '.rmi', '.exe', '.inf', '.rx2', '.sfz', '.sxt', '.fxp', '.exs', '.nki', '.m2v', '.fpl']
+
+class MyOpener(urllib.FancyURLopener):
+			version = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11'
 
 
 def getExternalIP():
-    site = urllib.urlopen("http://checkip.dyndns.org/").read()
-    grab = re.findall('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', site)
-    address = grab[0]
-    return address
+	site = urllib.urlopen("http://checkip.dyndns.org/").read()
+	grab = re.findall('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', site)
+	address = grab[0]
+	return address
 
 
 def getAlbumArt(album, artist, date, output, dest = ''):
@@ -21,8 +24,6 @@ def getAlbumArt(album, artist, date, output, dest = ''):
 		return
 	searchTerm = artist + ' ' + album + ' album cover'
 	searchTerm = searchTerm.replace(' ', '%20')
-	class MyOpener(FancyURLopener):
-			version = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11'
 	myopener = MyOpener()
 	IP = getExternalIP()
 	try:
@@ -58,6 +59,7 @@ def sortMusic(art = False, remove = True, output = True):
 			fileLower = file.lower()
 			ending = fileLower[-4:]
 			if ending == '.mp3':
+				continue
 				try:
 					audiofile = eyed3.load(root + '\\' + file)
 				except Exception as e:
@@ -65,14 +67,14 @@ def sortMusic(art = False, remove = True, output = True):
 					continue
 				try:
 					date = str(audiofile.tag.getBestDate())
-					date = unicode(date, "utf-8").strip().translate(remove_table)
+					date = unicode(date, "utf-8").strip().translate(removeCharacters)
 				except AttributeError as e:
 					print e
 				try:
 					artist = audiofile.tag.artist
 					album = audiofile.tag.album
-					artist = artist.strip().translate(remove_table)
-					album = album.strip().translate(remove_table)
+					artist = artist.strip().translate(removeCharacters)
+					album = album.strip().translate(removeCharacters)
 				except AttributeError:
 					try:
 						print 'Artist: ' + str(artist)
@@ -114,13 +116,17 @@ def sortMusic(art = False, remove = True, output = True):
 				except IOError as e:
 					print e
 
-			elif ending == '.jpg':
+			elif ending == '.jpg' or ending == '.png' or ending == 'jpeg' or ending == '.bmp' or ending == '.gif' or ending == '.tif':
 				if file != 'cover.jpg':
-					os.remove(os.path.join(root, file))
-					print 'DELETED old album art: ' + file
+					try:
+						os.remove(os.path.join(root, file))
+						print 'DELETED old album art: ' + file
+					except Exception as e:
+						print e
 				else:
-					print 'SKIPPED cover.jpg'
-			elif ending == '.m4a' or ending == '.m4p' or ending == '.mp4' or ending == '.ini' or ending == '.sfv' or ending == '.nfo' or ending == '.wma' or ending == '.wmv' or ending[1:] == '.db' or ending == '.flv' or ending == '.tqd' or ending == '.lnk' or ending == '.m3u' or ending == '.txt' or ending == '.cda' or ending == '.bin' or ending == '.cue' or ending == '.xml':
+					pass
+					# print 'SKIPPED cover.jpg'
+			elif ending in removeFileTypes:
 				filePath = os.path.join(root, file)
 				try:
 					os.remove(filePath)
@@ -148,6 +154,13 @@ def sortMusic(art = False, remove = True, output = True):
 					os.makedirs(destFolder)
 				shutil.move(src, destFolder + file)
 				print 'MOVED flac file'
+			elif ending[1:] == '.db':
+				filePath = os.path.join(root, file)
+				try:
+					os.remove(filePath)
+					print 'DELETED {0}'.format(filePath)
+				except Exception as e:
+					print e
 			else:
 				print 'SKIPPED: ' + file
 	if remove:
@@ -166,4 +179,4 @@ def removeEmpty():
 					print e
 
 
-sortMusic(True, True, False)
+sortMusic(False, True, False)
